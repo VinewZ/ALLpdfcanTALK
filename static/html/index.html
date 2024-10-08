@@ -1,0 +1,109 @@
+{{ block "index" . }}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title></title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-stone-900 v-screen h-screen grid place-content-center">
+
+  {{ template "form" . }}
+
+  <div class="flex flex-col gap-4 items-center justify-center mt-8">
+    <h1 class="text-white text-2xl font-bold">Recent uploads</h1>
+    <p id="filename"> {{.filename}} </p>
+  </div>
+</body>
+
+<script type="module">
+  window.onload = () => {
+
+    const form = document.querySelector("#form-upload")
+    const fileInput = document.querySelector("#file-input")
+    const fileName = document.querySelector("#file-name")
+    const fileIcon = document.querySelector("#file-icon")
+    const btnSubmit = document.querySelector("#btn-submit")
+    const btnTrash = document.querySelector("#btn-trash")
+
+    const formState = {
+      initial: {
+        fileName: "Upload a PDF or a TXT",
+        fileIcon: "/static/images/upload.svg",
+        disableSubmit: true
+      },
+      fileSelected: {
+        fileName: "",
+        fileIcon: "/static/images/file.svg",
+        disableSubmit: false
+      }
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const formData = new FormData(form)
+      const response = await fetch(form.action, {
+        method: form.method,
+        body: formData
+      })
+      const data = await response.json()
+      clearForm()
+    })
+
+    fileInput.addEventListener('change', (e) => {
+      formState.fileSelected.fileName = e.target.files[0].name
+      switch (e.target.files[0] ? "fileSelected" : "initial") {
+        case "fileSelected":
+          fileName.innerText = formState.fileSelected.fileName
+          fileIcon.src = formState.fileSelected.fileIcon
+          btnSubmit.disabled = formState.fileSelected.disableSubmit
+          break
+        case "initial":
+          fileName.innerText = formState.initial.fileName
+          fileIcon.src = formState.initial.fileIcon
+          btnSubmit.disabled = formState.initial.disableSubmit
+          break
+      }
+    });
+
+    btnTrash.addEventListener("click", () => clearForm())
+
+    function clearForm() {
+      fileInput.value = null
+      fileName.innerText = formState.initial.fileName
+      fileIcon.src = formState.initial.fileIcon
+      btnSubmit.disabled = formState.initial.disableSubmit
+    }
+  }
+</script>
+
+</html>
+{{ end }}
+
+
+{{ define "form" }}
+<form id="form-upload" action="/api/upload" method="POST" class="flex flex-col justify-center items-center gap-4"
+  enctype="multipart/form-data">
+  <div
+    class="w-56 h-56 bg-blue-900 grid place-content-center rounded-md relative flex flex-col gap-4 border-dashed border text-white border hover:bg-blue-700 transition-colors">
+    <img id="file-icon" class="mx-auto size-13 rounded-full bg-stone-100 p-3 pointer-events-none"
+      src="/static/images/upload.svg">
+    <span id="file-name" class="font-bold pointer-events-none">Upload a PDF or a TXT</span>
+    <input id="file-input" class="absolute w-full h-full opacity-0 cursor-pointer" type="file" name="file-input">
+  </div>
+  <div class="flex gap-2 items-center justify-center w-full">
+    <button id="btn-submit" type="submit"
+      class="flex-1 text-blue-700 hover:text-white border border-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg px-5 py-2.5 text-center dark:border-blue-500 dark:text-blue-500 dark:hover:text-white dark:hover:bg-blue-500 dark:focus:ring-blue-800 transition disabled:cursor-not-allowed disabled:opacity-50"
+      disabled>
+      Send
+    </button>
+    <button id="btn-trash" type="button"
+      class="text-red-700 hover:text-white border border-red-700 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-full text-sm p-2.5 text-center dark:border-red-500 dark:text-red-500 dark:hover:text-white dark:hover:bg-red-600 dark:focus:ring-red-900">
+      <img class="text-red-700 w-8" src="/static/images/trash.svg">
+    </button>
+  </div>
+</form>
+{{ end }}
